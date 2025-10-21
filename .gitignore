@@ -154,6 +154,10 @@ venv.bak/
 # mkdocs documentation
 /site
 
+#dataset
+Tech_Use_Stress_Wellness.csv
+
+
 # mypy
 .mypy_cache/
 .dmypy.json
