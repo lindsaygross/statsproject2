@@ -1,0 +1,2 @@
+test,n_Lindsay,n_Alex,mean_Lindsay,mean_Alex,median_Lindsay,median_Alex,p_value,cohen_d,hedges_g,mean_diff_Lindsay_minus_Alex,ci95_low,ci95_high,shapiro_p_Lindsay,shapiro_p_Alex,levene_p
+Mann–Whitney U,366,357,6456.8442622950815,7986.887955182073,6391.0,7615.0,2.420291630406731e-08,-0.4014379710016296,-0.4010202415833136,-1530.0436928869913,,,1.6814379597161035e-10,2.9893227622867074e-10,0.0005610356922142979
