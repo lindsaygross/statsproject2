@@ -25,7 +25,7 @@ import matplotlib
 matplotlib.use("Agg")  # headless (saves images only)
 import matplotlib.pyplot as plt
 
-# ---- Settings (hard-coded for simplicity) ----
+#Settings (hard-coded for simplicity) 
 LINDSAY_CSV = "lindsay_steps_per_day_2024.csv"
 ALEX_CSV    = "alex_steps_per_day_2024.csv"
 OUTDIR      = "outputs"
@@ -71,7 +71,7 @@ def main():
     describe("Lindsay", l["steps"])
     describe("Alex",    a["steps"])
 
-    # ---- H1: Lindsay vs Alex (Welch t-test) ----
+    #  H1: Lindsay vs Alex (Welch t-test) 
     # Assumption checks (lightweight)
     try:
         p_shap_l = stats.shapiro(l["steps"]).pvalue if len(l) <= 5000 else np.nan
@@ -87,7 +87,7 @@ def main():
 
     res_h1 = welch_t(l["steps"], a["steps"], label="H1: Lindsay vs Alex")
 
-    # ---- H2: Weekday vs Weekend (per person; Welch t-tests) ----
+    #  H2: Weekday vs Weekend (per person; Welch t-tests) 
     l["weekday"] = l["date"].dt.dayofweek  # Mon=0 ... Sun=6
     a["weekday"] = a["date"].dt.dayofweek
     l_wd, l_we = l[l["weekday"] < 5]["steps"], l[l["weekday"] >= 5]["steps"]
@@ -96,7 +96,7 @@ def main():
     welch_t(l_wd, l_we, label="H2: Lindsay Weekday vs Weekend")
     welch_t(a_wd, a_we, label="H2: Alex Weekday vs Weekend")
 
-    # ---- Power analysis (two-sample; based on observed effect size) ----
+    #  Power analysis (two-sample; based on observed effect size) 
     # Cohen's d using pooled SD
     pooled_sd = np.sqrt((l["steps"].std(ddof=1)**2 + a["steps"].std(ddof=1)**2) / 2.0)
     d = abs(l["steps"].mean() - a["steps"].mean()) / pooled_sd if pooled_sd > 0 else 0.0
@@ -109,7 +109,7 @@ def main():
     print(f"  Observed effect size (d): {d:.2f}")
     print(f"  Approx. required n per group: {int(round(n_needed)) if np.isfinite(n_needed) else 'n/a'}")
 
-    # ---- Simple plots ----
+    #  Simple plots 
     # Boxplot by person
     plt.figure()
     plt.boxplot([l["steps"], a["steps"]], labels=["Lindsay", "Alex"])
@@ -131,7 +131,7 @@ def main():
     plt.savefig(os.path.join(OUTDIR, "box_by_month.png"), bbox_inches="tight")
     plt.close()
 
-    # Optional: small descriptives table to file
+    # small descriptives table to file
     desc = pd.DataFrame({
         "person": ["Lindsay", "Alex"],
         "days":   [l.shape[0], a.shape[0]],
