@@ -1,50 +1,44 @@
-# Daily Step Counts in 2024: A Comparative Statistical Analysis
 
-## Abstract
-We analyze daily step counts for two individuals across the 2024 calendar year to test differences between people, weekday–weekend patterns, and seasonal variation. We check assumptions, apply appropriate parametric or non-parametric tests, report effect sizes and confidence intervals, and perform a power analysis to justify sample size.
+### Summary of Results
 
-## Background & Motivation
-Physical activity (proxied by step counts) varies across people and time. Understanding differences between individuals, weekday/weekend patterns, and seasonal shifts can inform habit-building strategies and health planning.
+**H1: Lindsay vs Alex (between-person difference)**
 
-## Null and Alternative Hypotheses
-- **H1:** μ_Lindsay = μ_Alex (null) vs μ_Lindsay ≠ μ_Alex (alt).
-- **H2 (per person):** μ_weekday = μ_weekend vs μ_weekday ≠ μ_weekend.
-- **H3:** Mean daily steps are equal across months vs at least one month differs.
+* Mean daily steps:
 
-## Experimental Design
-- **Design:** Observational; unit = person-day in 2024.
-- **Independent variables:** Person (between), Day type (weekday/weekend; within), Month (Jan–Dec).
-- **Dependent variable:** Steps per day.
-- **Controls:** Restrict to 2024; aggregate to daily totals.
-- **Randomization:** Not applicable.
+  * Lindsay = 6,457
+  * Alex = 7,987
+* Welch t = –5.41, p < 0.001 → **statistically significant difference**
+* Interpretation: Alex walked significantly more on average than Lindsay.
+* Effect size ≈ 0.40 (Cohen’s d ≈ medium).
+* **Power analysis:** With d = 0.40, about 98 days per person would be needed for 80 % power—your data (357–366 days) easily meets that.
 
-## Power Analysis
-Two-sample t-test framework used for H1; if effect size is small, larger n improves power.
+---
 
-## Data Collection & Cleaning Procedures
-- Source: Apple Health step counts exported to CSV.
-- Standardized columns to `date` and `steps`; converted to datetime & numeric.
-- Restricted to 2024 and aggregated to one row per day per person.
-- Derived fields: weekday/weekend, month.
-- See `steps_2024_tidy.csv` for final dataset.
+**H2: Weekday vs Weekend (within-person patterns)**
 
-## Statistical Analysis
-- Assumption checks: Shapiro–Wilk for normality, Levene for homogeneity of variance.
-- **H1:** Mann–Whitney U; p = 0.0000, mean diff (Lindsay − Alex) = -1530.0, 95% CI = n/a, Hedges g = -0.40.
-- **H2:** See `h2_within_person_weekday_weekend.csv` for per-person comparisons.
-- **H3:** See `h3_monthly_results.csv` and pairwise CSVs for month comparisons.
-- When normality/variance assumptions failed, non-parametric alternatives were used.
+* **Lindsay:** Weekdays = 6,657 steps, Weekends = 5,953 steps (p = 0.12)
+  → Not statistically significant but trend = more weekday steps.
+* **Alex:** Weekdays = 7,893 steps, Weekends = 8,221 steps (p = 0.44)
+  → No significant difference.
 
-## Interpretation of Results
-Interpretation emphasizes effect sizes and confidence intervals alongside p-values to gauge practical significance (e.g., routine differences, schedule effects, seasonality).
+---
 
-## Limitations
-Observational (no causal inference), device measurement noise, possible missing days, unmodeled confounders (e.g., weather, travel). Multiple comparisons addressed with Tukey HSD or Holm adjustment where applicable.
+**Assumption checks (normality + variance):**
 
-## Conclusion & Recommendations
-Summarize whether differences are meaningful and suggest practical actions (e.g., targeted walks on low-activity days). Future work could incorporate weather/location or fit mixed-effects models for richer inference.
+* Shapiro p values ≈ 1e-10 → non-normal distributions (but Welch t-test is robust).
+* Levene p = 0.0006 → variances differ → Welch test was the right choice.
 
-## References
-- Cohen, J. (1988). *Statistical Power Analysis for the Behavioral Sciences*.
-- Lakens, D. (2013). Calculating and reporting effect sizes.
-- Wilcoxon, Mann–Whitney (1945–47); Tukey (1949).
+---
+
+### Visuals
+
+* **Lindsay vs Alex:** Boxplot clearly shows Alex’s median and upper range higher.
+* **Monthly patterns:** Steps fluctuate across months (lowest in mid-year, peaks late year).
+
+---
+
+### Inference for Report
+
+* **Null (H1):** μₗ = μₐ → Reject (p < 0.001).
+* **H2:** Fail to reject (p > 0.05).
+* **Conclusion:** Alex walks more overall; no consistent weekday/weekend or monthly pattern that’s statistically strong.
