@@ -1,8 +1,11 @@
 kagglehub
 numpy
-pandas
-matplotlib
 scikit-learn
 ipykernel
 statsmodels
 scipy
+pandas>=2.0
+scipy>=1.11
+statsmodels>=0.14
+matplotlib>=3.7
+python-dateutil>=2.8
