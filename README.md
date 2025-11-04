@@ -1,12 +1,136 @@
-# statsproject2
-Exploring relationship between tech use and wellness
+# Statistical Analysis of Daily Step Counts
 
-# Instructions
+A comprehensive statistical comparison of daily step patterns between two individuals (Alex and Lindsay) using advanced statistical methods and bootstrap confidence intervals.
 
+## Overview
+
+This project analyzes daily step count data to compare activity patterns between two individuals over the 2024-2025 period. The analysis employs rolling averages, normality testing, distribution comparisons, and non-parametric statistical tests to identify significant differences in step patterns.
+
+## Setup Instructions
+
+```bash
 python -m venv venv
 
 source venv/bin/activate
 
 pip install -r requirements.txt
+```
 
-Download Dataset [here](https://www.kaggle.com/datasets/abhishekdave9/digital-habits-vs-mental-health-dataset/data)
+## Data Sources
+
+- `alex_steps_per_day.csv` - Alex's daily step counts
+- `lindsay_steps_per_day.csv` - Lindsay's daily step counts
+- **Analysis Period**: 2024-2025 (655 days for Alex, 670 days for Lindsay)
+
+## Statistical Analysis Process (`finaltests.ipynb`)
+
+### 1. Data Preprocessing
+
+**Rolling Average Methodology**:
+- **Window Size**: 3-day rolling averages to smooth daily variations
+- **Bootstrap Sampling**: 500 randomly selected 3-day blocks per individual
+- **Purpose**: Reduce noise and capture underlying activity patterns
+
+```python
+# Key parameters
+ROLLING_WINDOW = 3  # 3 day blocks
+SAMPLE_SIZE = 500   # Bootstrap sample size
+RANDOM_STATE = 42   # For reproducibility
+```
+
+### 2. Normality Assessment
+
+**Shapiro-Wilk Test Results**:
+- **Alex**: W = 0.9421, p = 8.88e-24
+- **Lindsay**: W = 0.9128, p = 1.61e-28
+- **Conclusion**: Both distributions are significantly non-normal (p < 0.05)
+
+**Implication**: Non-parametric tests are required for valid statistical inference.
+
+### 3. Distribution Comparison
+
+**Descriptive Statistics**:
+- **Alex Mean**: 7,545.7 steps/day
+- **Lindsay Mean**: 7,115.9 steps/day
+- **Difference**: 429.8 steps/day (Alex higher)
+
+**Effect Size**:
+- **Cohen's d**: 0.105 (small effect size)
+- **Interpretation**: Practically small but statistically detectable difference
+
+### 4. Statistical Tests Performed
+
+#### Kolmogorov-Smirnov Two-Sample Test
+- **Purpose**: Compare entire distribution shapes
+- **Result**: D = 0.157, p = 1.78e-16
+- **Conclusion**: Highly significant difference in distributions
+
+#### Bootstrap Confidence Intervals for KS Statistic
+- **Method**: 1,000 bootstrap resamples
+- **95% CI**: [0.1326, 0.1873]
+- **Original KS**: 0.1567 ✓ (falls within CI)
+- **Validation**: Bootstrap confirms the reliability of the KS test result
+
+#### Mann-Whitney U Test
+- **Purpose**: Non-parametric test for median differences
+- **Result**: U = 1,233,835, p = 4.47e-06
+- **Conclusion**: Significant difference in central tendencies
+
+#### Wilcoxon Signed-Rank Test Analysis
+- **Method**: Tested multiple hypothesized medians (6,400-7,800 steps)
+- **Purpose**: Identify confidence intervals for true medians
+- **Visualization**: P-value curves showing median estimation ranges
+
+### 5. Key Visualizations
+
+1. **Distribution Comparison Histograms**: Overlaid histograms showing step count distributions
+2. **Q-Q Plots**: Demonstrate non-normal distributions for both individuals
+3. **Empirical Cumulative Distribution Functions (ECDF)**: Visualize the maximum difference (D = 0.157) between distributions
+4. **Wilcoxon P-value Curves**: Show confidence regions for median estimates
+
+## Key Findings
+
+### Statistical Significance
+- **Highly significant differences** detected across multiple tests (all p < 0.001)
+- **Robust results** confirmed through bootstrap validation
+- **Non-parametric approach** appropriate due to non-normal distributions
+
+### Practical Significance
+- **Small effect size** (Cohen's d = 0.105) suggests limited practical importance
+- **Mean difference** of ~430 steps/day is detectable but modest
+- **Individual variation** is substantial within each person's data
+
+### Methodological Strengths
+- **Rolling averages** reduce daily noise while preserving patterns
+- **Bootstrap confidence intervals** provide robust uncertainty quantification
+- **Multiple statistical tests** ensure comprehensive analysis
+- **Reproducible methodology** with fixed random seeds
+
+## Technical Implementation
+
+**Key Libraries**:
+- `pandas` - Data manipulation and analysis
+- `numpy` - Numerical computations
+- `scipy.stats` - Statistical tests (Shapiro-Wilk, KS, Mann-Whitney, Wilcoxon)
+- `matplotlib` - Data visualization
+- `statsmodels` - Q-Q plots and advanced statistical modeling
+
+**Reproducibility**:
+- Fixed random state (RANDOM_STATE = 42)
+- Documented parameters and methodology
+- Clear data filtering criteria (2024-2025 period)
+
+## Files Structure
+
+- `finaltests.ipynb` - **Main analysis notebook** (this README focuses on this file)
+- `assumptions.ipynb` - Preliminary assumption testing
+- `stats.ipynb` - Basic statistical exploration
+- `step_analysis_2024.py` - Python script version of analysis
+- `outputs/` - Generated plots and results
+
+## Conclusion
+
+The analysis demonstrates **statistically significant but practically small differences** in daily step patterns between Alex and Lindsay. The robust statistical methodology, including bootstrap validation and multiple non-parametric tests, provides high confidence in the results while acknowledging the limited practical significance of the observed differences.
+
+
+README built by Claude Sonnet 4 via the Windsurf Application.
