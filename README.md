@@ -8,9 +8,11 @@
 ## Overview
 This project compares **daily step counts** for Lindsay and Alex using Apple Health data from **2024**.  
 We analyzed differences in activity **between people**, **across weekdays and weekends**, and **by month** using reproducible Python scripts and nonparametric statistical tests.
-
+'''
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
-```
+'''
 
 ## Data Sources
 
@@ -21,18 +23,15 @@ pip install -r requirements.txt
 ## Statistical Analysis Process (`finaltests.ipynb`)
 
 ### 1. Data Preprocessing
+**Preprocessing steps raw xml data** 
+- `apple_steps.py` - ChatGPT generated script to break down Apple Health's export.xml file.
 
-**Rolling Average Methodology**:
-- **Window Size**: 3-day rolling averages to smooth daily variations
-- **Bootstrap Sampling**: 500 randomly selected 3-day blocks per individual
+
+**Moving Block Bootstrap Methodology**:
+- **Window Size**: 3-day blocking strategy to remove sources of dependence in time series data.
+- **Bootstrap Sampling**: 1000 randomly selected 3-day blocks per individual
 - **Purpose**: Reduce noise and capture underlying activity patterns
 
-```python
-# Key parameters
-ROLLING_WINDOW = 3  # 3 day blocks
-SAMPLE_SIZE = 500   # Bootstrap sample size
-RANDOM_STATE = 42   # For reproducibility
-```
 
 ### 2. Normality Assessment
 
@@ -102,36 +101,9 @@ RANDOM_STATE = 42   # For reproducibility
 - **Multiple statistical tests** ensure comprehensive analysis
 - **Reproducible methodology** with fixed random seeds
 
-## Technical Implementation
-
-**Key Libraries**:
-- `pandas` - Data manipulation and analysis
-- `numpy` - Numerical computations
-- `scipy.stats` - Statistical tests (Shapiro-Wilk, KS, Mann-Whitney, Wilcoxon)
-- `matplotlib` - Data visualization
-- `statsmodels` - Q-Q plots and advanced statistical modeling
-
-**Reproducibility**:
-- Fixed random state (RANDOM_STATE = 42)
-- Documented parameters and methodology
-- Clear data filtering criteria (2024-2025 period)
-
-## Files Structure
-
-- `finaltests.ipynb` - **Main analysis notebook** (this README focuses on this file)
-- `assumptions.ipynb` - Preliminary assumption testing
-- `stats.ipynb` - Basic statistical exploration
-- `step_analysis_2024.py` - Python script version of analysis
-- `outputs/` - Generated plots and results
-
-## Conclusion
-
-The analysis demonstrates **statistically significant but practically small differences** in daily step patterns between Alex and Lindsay. The robust statistical methodology, including bootstrap validation and multiple non-parametric tests, provides high confidence in the results while acknowledging the limited practical significance of the observed differences.
-
-
-README built by Claude Sonnet 4 via the Windsurf Application.
 ---
-
+## Mann-Whitney U Tests
+`step_analysis_2024.py`
 ## Methods
 - **Data:** Apple Health exports filtered to 2024  
 - **Variables:** Person, Day Type (Weekday/Weekend), Month  
@@ -170,10 +142,35 @@ Observational data only; device differences and contextual factors (weather, tra
 
 ---
 
-## Future Work
-Add contextual data (e.g., weather or events) and explore long-term or clustered activity patterns.
+## Technical Implementation
 
----
+**Key Libraries**:
+- `pandas` - Data manipulation and analysis
+- `numpy` - Numerical computations
+- `scipy.stats` - Statistical tests (Shapiro-Wilk, KS, Mann-Whitney, Wilcoxon)
+- `matplotlib` - Data visualization
+- `statsmodels` - Q-Q plots and advanced statistical modeling
+
+**Reproducibility**:
+- Fixed random state (RANDOM_STATE = 42)
+- Documented parameters and methodology
+- Clear data filtering criteria (2024-2025 period)
+
+## Files Structure
+
+- `finaltests.ipynb` - **Main analysis notebook** (Kolmogorov-Smirnov Test and Wilcoxon One-Sample Test Experiments)
+   `step_analysis_2024.py` - Python script analysis (Mann-Whitney U Tests)
+- `assumptions.ipynb` - Preliminary assumption testing 
+- `stats.ipynb` - Basic statistical exploration
+- `outputs/` - Generated plots and results
+
+## Conclusion
+
+The analysis demonstrates **statistically significant but practically small differences** in daily step patterns between Alex and Lindsay. The robust statistical methodology, including bootstrap validation and multiple non-parametric tests, provides high confidence in the results while acknowledging the limited practical significance of the observed differences.
+
+
+README built by Claude Sonnet 4 via the Windsurf Application.
 
 **References:**  
 Schäfer & Schwarz (2019). *The Meaningfulness of Effect Sizes in Psychological Research.* *Frontiers in Psychology*, 10. [https://doi.org/10.3389/fpsyg.2019.00813](https://doi.org/10.3389/fpsyg.2019.00813)
+European Journal of Preventive Cardiology, Volume 30, Issue 18, December 2023, Pages 1975–1985, https://doi.org/10.1093/eurjpc/zwad229
