@@ -1,8 +1,18 @@
 kagglehub
 numpy
-pandas
-matplotlib
 scikit-learn
 ipykernel
+<<<<<<< Updated upstream
 statsmodels
 scipy
+=======
+>>>>>>> Stashed changes
+pandas>=2.0
+scipy>=1.11
+statsmodels>=0.14
+matplotlib>=3.7
+<<<<<<< Updated upstream
+python-dateutil>=2.8
+=======
+python-dateutil>=2.8
+>>>>>>> Stashed changes
