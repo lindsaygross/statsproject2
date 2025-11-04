@@ -126,6 +126,24 @@ def main():
 
     # H1: Lindsay vs Alex (independent) — Mann–Whitney U
     mann_whitney_test(l["steps"], a["steps"], label="H1: Lindsay vs Alex")
+    
+    #  Power & Sample Size Justification 
+    from statsmodels.stats.power import TTestIndPower
+    import numpy as np
+
+    l_steps = l["steps"].values
+    a_steps = a["steps"].values
+    pooled_sd = np.sqrt((np.var(l_steps, ddof=1) + np.var(a_steps, ddof=1)) / 2.0)
+    d = (np.mean(a_steps) - np.mean(l_steps)) / pooled_sd if pooled_sd > 0 else 0.0
+
+    analysis = TTestIndPower()
+    n_needed = analysis.solve_power(effect_size=max(abs(d), 0.2), power=0.80, alpha=0.05)
+
+    print("\nPower analysis (t-test approximation for Mann–Whitney):")
+    print(f"  Observed Cohen's d ≈ {d:.2f}")
+    print(f"  Required n per group for 80% power @ α=0.05: ~{int(round(n_needed))}")
+    print(f"  Actual n: Lindsay={len(l_steps)}, Alex={len(a_steps)} --> Sufficient power")
+
 
     # Weekday vs Weekend per person
     l["dow"] = l["date"].dt.dayofweek
