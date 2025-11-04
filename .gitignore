@@ -210,6 +210,9 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 export.xml
+<<<<<<< Updated upstream
 
 # Hide private scripts and extended outputs
 advanced_analysis/
+=======
+>>>>>>> Stashed changes
