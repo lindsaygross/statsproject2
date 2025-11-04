@@ -1,47 +1,35 @@
 
-#!/usr/bin/env python3
 """
 Simple 2024 step-count analysis (Lindsay vs Alex)
-
-What it does:
-- Loads two CSVs: lindsay_steps_per_day_2024.csv, alex_steps_per_day_2024.csv
-- Filters to 2024 (safeguard), computes basic descriptives
-- H1: Lindsay vs Alex (Welch t-test)  + quick assumption checks
-- H2: Weekday vs Weekend (per person; Welch t-test)
-- Power analysis (two-sample, using observed effect size)
-- Saves two plots to outputs/: boxplot by person, boxplot by month
-- Prints all key stats to the console
-
-Run:
-    python3 analysis.py
+- Uses nonparametric tests due to non-normality.
+- Mann–Whitney U for independent samples (daily data).
+- Wilcoxon signed-rank on week-level paired means (weekday vs weekend).
+- Reports nonparametric effect sizes: Cliff's delta (independent), rank-biserial (Wilcoxon).
 """
 
 import os
 import numpy as np
 import pandas as pd
 from scipy import stats
-from statsmodels.stats.power import TTestIndPower
 import matplotlib
-matplotlib.use("Agg")  # headless (saves images only)
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-# ---- Settings (hard-coded for simplicity) ----
 LINDSAY_CSV = "lindsay_steps_per_day_2024.csv"
 ALEX_CSV    = "alex_steps_per_day_2024.csv"
 OUTDIR      = "outputs"
 
+USE_WILCOXON_WEEK_PAIRS = False  
+
 def load_steps(csv_path: str) -> pd.DataFrame:
-    """Load a CSV with columns date, steps; filter to 2024; return DataFrame."""
     df = pd.read_csv(csv_path, encoding="utf-8-sig")
-    # Normalize headers a bit, then ensure required columns
     df.columns = df.columns.str.strip().str.lower().str.replace("\ufeff", "", regex=False)
     if "date" not in df.columns or "steps" not in df.columns:
         raise ValueError(f"{csv_path} must have columns: date, steps (found: {list(df.columns)})")
-
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df["steps"] = pd.to_numeric(df["steps"], errors="coerce")
+    df["date"]  = pd.to_datetime(df["date"], errors="coerce") # Used chatgpt5 at 5:30pm on 11/1/2025 to help with date parsing and to add error handling
+    df["steps"] = pd.to_numeric(df["steps"], errors="coerce") # Used chatgpt5 at 5:30pm on 11/1/2025 to help with date parsing and to add error handling
     df = df.dropna(subset=["date", "steps"])
-    df = df[df["date"].dt.year == 2024].copy()  # safeguard
+    df = df[df["date"].dt.year == 2024].copy()
     return df[["date", "steps"]]
 
 def describe(name: str, s: pd.Series):
@@ -53,64 +41,127 @@ def describe(name: str, s: pd.Series):
     print(f"  min:    {s.min():.0f}")
     print(f"  max:    {s.max():.0f}")
 
-def welch_t(x, y, label=""):
-    res = stats.ttest_ind(x, y, equal_var=False, nan_policy="omit")
-    print(f"\n{label} — Welch t-test")
-    print(f"  mean(x)={np.nanmean(x):.0f}, mean(y)={np.nanmean(y):.0f}")
-    print(f"  t={res.statistic:.3f}, p={res.pvalue:.4f}")
+# Nonparametric tests + effect sizes
+def cliff_delta(x, y):
+    # Used chatgpt at 6:30pm on 11/1/2025 to help write this function for cliff's delta/understand the formula
+    """Cliff's delta: P(X>Y) - P(X<Y)."""
+    x = np.asarray(x); y = np.asarray(y)
+    n_x, n_y = len(x), len(y)
+    count = 0
+    for xi in x:
+        # Used chatgpt at 7:00pm on 11//2025 to help write this loop
+        count += np.sum(xi > y) - np.sum(xi < y)
+    return count / (n_x * n_y)
+
+def rank_biserial_from_wilcoxon(T, n):
+    # Rank-biserial correlation for Wilcoxon signed-rank:
+    # Used chatgpt at 7:10pm on 11/1/2025 to help with this formula
+    return (2*T)/(n*(n+1)) - 1
+
+def mann_whitney_test(x, y, label=""):
+    # Used chatgpt at 6:50pm on 11/1/2025 to help write this function for mann-whitney
+    res = stats.mannwhitneyu(x, y, alternative="two-sided")
+    d = cliff_delta(x, y)
+    print(f"\n{label} — Mann–Whitney U")
+    print(f"  median(x)={np.nanmedian(x):.0f}, median(y)={np.nanmedian(y):.0f}")
+    print(f"  U={res.statistic:.0f}, p={res.pvalue:.4g}")
+    print(f"  Cliff's delta={d:.3f}") # small: 0.11, medium 0.28, and large effect ≈ 0.43
     return res
+
+def wilcoxon_week_pairs(df, label=""):
+    # Used chatgpt at 7:20pm on 11/1/2025 to help write this function for wilcoxon week pairs
+    """
+    Build paired week-level weekday/weekend means, then Wilcoxon signed-rank.
+    """
+    tmp = df.copy()
+    tmp["dow"] = tmp["date"].dt.dayofweek
+    tmp["year_week"] = tmp["date"].dt.strftime("%G-%V")   
+    weekday_means = (tmp[tmp["dow"] < 5]
+                     .groupby("year_week")["steps"].mean()
+                     .rename("weekday_mean"))
+    weekend_means = (tmp[tmp["dow"] >= 5]
+                     .groupby("year_week")["steps"].mean()
+                     .rename("weekend_mean"))
+    pairs = pd.concat([weekday_means, weekend_means], axis=1).dropna()
+    if pairs.empty or len(pairs) < 3:
+        return None
+
+    x = pairs["weekday_mean"].values
+    y = pairs["weekend_mean"].values
+    res = stats.wilcoxon(x, y, alternative="two-sided", zero_method="wilcox")
+    n = len(pairs)
+    r_rb = rank_biserial_from_wilcoxon(res.statistic, n)
+    print(f"\n{label} — Wilcoxon signed-rank (weekly paired means)")
+    print(f"  weeks paired: {n}")
+    print(f"  median(weekday_means)={np.median(x):.0f}, median(weekend_means)={np.median(y):.0f}")
+    print(f"  W={res.statistic:.0f}, p={res.pvalue:.4g}")
+    print(f"  Rank-biserial r ≈ {r_rb:.3f}  (~0.1 small, ~0.3 medium, ~0.5 large)")
+    return res
+
+def normality_and_variance_checks(l_steps, a_steps):
+    try:
+        p_shap_l = stats.shapiro(l_steps).pvalue if len(l_steps) <= 5000 else np.nan # Used chatgpt at 8:00pm on 11/1/2025 to help add shapiro test with exception handling
+        p_shap_a = stats.shapiro(a_steps).pvalue if len(a_steps) <= 5000 else np.nan
+    except Exception:
+        p_shap_l = p_shap_a = np.nan
+    p_levene = stats.levene(l_steps, a_steps, center="median").pvalue
+    print("\nAssumption checks (reporting only)")
+    print(f"Shapiro p (Lindsay): {p_shap_l if not np.isnan(p_shap_l) else 'n/a'}")
+    print(f"Shapiro p (Alex):    {p_shap_a if not np.isnan(p_shap_a) else 'n/a'}")
+    print(f"Levene p:            {p_levene:.4f}")
 
 def main():
     os.makedirs(OUTDIR, exist_ok=True)
 
-    # Load data
+    # Load
     l = load_steps(LINDSAY_CSV)
     a = load_steps(ALEX_CSV)
 
-    # Basic descriptives
+    # Descriptives
     describe("Lindsay", l["steps"])
     describe("Alex",    a["steps"])
 
-    # ---- H1: Lindsay vs Alex (Welch t-test) ----
-    # Assumption checks (lightweight)
-    try:
-        p_shap_l = stats.shapiro(l["steps"]).pvalue if len(l) <= 5000 else np.nan
-        p_shap_a = stats.shapiro(a["steps"]).pvalue if len(a) <= 5000 else np.nan
-    except Exception:
-        p_shap_l = p_shap_a = np.nan  # if Shapiro fails on large n, that's fine
-    p_levene = stats.levene(l["steps"], a["steps"], center="median").pvalue
+    # Normality/variance
+    normality_and_variance_checks(l["steps"], a["steps"])
 
-    print("\nAssumption checks (H1)")
-    print(f"  Shapiro p (Lindsay): {p_shap_l if not np.isnan(p_shap_l) else 'n/a'}")
-    print(f"  Shapiro p (Alex):    {p_shap_a if not np.isnan(p_shap_a) else 'n/a'}")
-    print(f"  Levene p:            {p_levene:.4f}")
+    # H1: Lindsay vs Alex (independent) — Mann–Whitney U
+    mann_whitney_test(l["steps"], a["steps"], label="H1: Lindsay vs Alex")
+    
+    #  Power & Sample Size Justification 
+    from statsmodels.stats.power import TTestIndPower
+    import numpy as np
 
-    res_h1 = welch_t(l["steps"], a["steps"], label="H1: Lindsay vs Alex")
+    l_steps = l["steps"].values
+    a_steps = a["steps"].values
+    pooled_sd = np.sqrt((np.var(l_steps, ddof=1) + np.var(a_steps, ddof=1)) / 2.0)
+    d = (np.mean(a_steps) - np.mean(l_steps)) / pooled_sd if pooled_sd > 0 else 0.0
 
-    # ---- H2: Weekday vs Weekend (per person; Welch t-tests) ----
-    l["weekday"] = l["date"].dt.dayofweek  # Mon=0 ... Sun=6
-    a["weekday"] = a["date"].dt.dayofweek
-    l_wd, l_we = l[l["weekday"] < 5]["steps"], l[l["weekday"] >= 5]["steps"]
-    a_wd, a_we = a[a["weekday"] < 5]["steps"], a[a["weekday"] >= 5]["steps"]
-
-    welch_t(l_wd, l_we, label="H2: Lindsay Weekday vs Weekend")
-    welch_t(a_wd, a_we, label="H2: Alex Weekday vs Weekend")
-
-    # ---- Power analysis (two-sample; based on observed effect size) ----
-    # Cohen's d using pooled SD
-    pooled_sd = np.sqrt((l["steps"].std(ddof=1)**2 + a["steps"].std(ddof=1)**2) / 2.0)
-    d = abs(l["steps"].mean() - a["steps"].mean()) / pooled_sd if pooled_sd > 0 else 0.0
     analysis = TTestIndPower()
-    try:
-        n_needed = analysis.solve_power(effect_size=d if d > 0 else 0.5, power=0.80, alpha=0.05)
-    except Exception:
-        n_needed = np.nan
-    print("\nPower analysis (two-sample t-test, α=0.05, power=0.80)")
-    print(f"  Observed effect size (d): {d:.2f}")
-    print(f"  Approx. required n per group: {int(round(n_needed)) if np.isfinite(n_needed) else 'n/a'}")
+    n_needed = analysis.solve_power(effect_size=max(abs(d), 0.2), power=0.80, alpha=0.05)
 
-    # ---- Simple plots ----
-    # Boxplot by person
+    print("\nPower analysis (t-test approximation for Mann–Whitney):")
+    print(f"  Observed Cohen's d ≈ {d:.2f}")
+    print(f"  Required n per group for 80% power @ α=0.05: ~{int(round(n_needed))}")
+    print(f"  Actual n: Lindsay={len(l_steps)}, Alex={len(a_steps)} --> Sufficient power")
+
+
+    # Weekday vs Weekend per person
+    l["dow"] = l["date"].dt.dayofweek
+    a["dow"] = a["date"].dt.dayofweek
+    # Used chatgpt at 8:00pm on 11/1/2025 to edit this section for weekday vs weekend to make more readable/efficient
+    l_wd, l_we = l[l["dow"] < 5]["steps"].values, l[l["dow"] >= 5]["steps"].values
+    a_wd, a_we = a[a["dow"] < 5]["steps"].values, a[a["dow"] >= 5]["steps"].values
+
+    if USE_WILCOXON_WEEK_PAIRS:
+        # Pair by week, then Wilcoxon
+        wilcoxon_week_pairs(l, label="H2: Lindsay Weekday vs Weekend")
+        wilcoxon_week_pairs(a, label="H2: Alex Weekday vs Weekend")
+    else:
+        # Treat daily obs as independent, use Mann–Whitney
+        mann_whitney_test(l_wd, l_we, label="H2: Lindsay Weekday vs Weekend")
+        mann_whitney_test(a_wd, a_we, label="H2: Alex Weekday vs Weekend")
+
+    # PLOTS 
     plt.figure()
     plt.boxplot([l["steps"], a["steps"]], labels=["Lindsay", "Alex"])
     plt.ylabel("Daily steps")
@@ -118,7 +169,7 @@ def main():
     plt.savefig(os.path.join(OUTDIR, "box_lindsay_vs_alex.png"), bbox_inches="tight")
     plt.close()
 
-    # Boxplot by month (overall, both people)
+    # Boxplot by month
     la = pd.concat([l.assign(person="Lindsay"), a.assign(person="Alex")], ignore_index=True)
     la["month"] = la["date"].dt.month
     month_order = sorted(la["month"].unique())
@@ -131,7 +182,7 @@ def main():
     plt.savefig(os.path.join(OUTDIR, "box_by_month.png"), bbox_inches="tight")
     plt.close()
 
-    # Optional: small descriptives table to file
+    # Descriptives table 
     desc = pd.DataFrame({
         "person": ["Lindsay", "Alex"],
         "days":   [l.shape[0], a.shape[0]],

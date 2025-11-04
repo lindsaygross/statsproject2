@@ -1,63 +1,58 @@
 # Daily Step Count Analysis (2024)
 
-**Author:** Lindsay Gross and Alex Oh  
+**Authors:** Lindsay Gross & Alex Oh  
 **Course:** AIPI 510 — Statistical Analysis Project  
 
 ---
 
 ## Overview
-This project analyzes **daily step counts** for Lindsay and Alex using Apple Health data from **2024**.  
-The goal was to test whether there were meaningful differences in daily activity patterns across people, weekdays vs. weekends, and months.
-
-The analysis covers the full pipeline from **data cleaning and hypothesis testing** to **visualization and interpretation**, using Python and reproducible scripts.
+This project compares **daily step counts** for Lindsay and Alex using Apple Health data from **2024**.  
+We analyzed differences in activity **between people**, **across weekdays and weekends**, and **by month** using reproducible Python scripts and nonparametric statistical tests.
 
 ---
 
-## Research Question
-> Do Lindsay and Alex differ in their average daily step counts, and do activity patterns vary across weekdays, weekends, or months?
+## Methods
+- **Data:** Apple Health exports filtered to 2024  
+- **Variables:** Person, Day Type (Weekday/Weekend), Month  
+- **Tests:** Mann–Whitney U (independent) & Wilcoxon signed-rank (paired)  
+- **Effect Sizes:** Cliff’s δ and rank-biserial r  
+- **Libraries:** `pandas`, `scipy`, `matplotlib`
 
 ---
 
-##  Hypotheses
-- **H1:** Lindsay and Alex’s mean daily steps are significantly different.  
-- **H2:** Each person’s weekday and weekend step counts differ.  
-- **H3:** Mean daily steps differ across months.
+## Results
+
+| Comparison | Median 1 | Median 2 | p-value | Effect Size | Interpretation |
+|:------------|:----------|:----------|:---------|:--------------|:----------------|
+| **Lindsay vs Alex** | 6,391 | 7,615 | 2.4 × 10⁻⁸ | δ = –0.24 | Alex walked significantly more |
+| **Lindsay Weekday–Weekend** | 6,845 | 4,985 | 0.13 | δ = +0.10 | Not significant |
+| **Alex Weekday–Weekend** | 7,552 | 7,788 | 0.46 | δ = –0.05 | Not significant |
+
+**Monthly trends:** Natural variation, no consistent seasonal pattern.
 
 ---
 
-##  Experimental Design
-- **Type:** Observational study  
-- **Data source:** Apple Health step count exports  
-- **Time frame:** January–December 2024  
-- **Variables:**  
-  - Independent: Person, Day Type (Weekday/Weekend), Month  
-  - Dependent: Daily step count  
-- **Controls:** Filtered to 2024 only, aggregated to one row per day  
-- **Randomization:** Not applicable (observational dataset)
+## Visuals
+-  `box_lindsay_vs_alex.png` — Between-person step distributions  
+-  `box_by_month.png` — Monthly step trends  
 
 ---
 
-##  Data Collection & Cleaning
-1. Exported Apple Health data to `export.xml`  
-2. Converted to daily CSVs using `apple_steps.py`  
-3. Filtered to include only **2024** using `filter_to_2024.py`  
-4. Produced cleaned datasets:
-   - `lindsay_steps_per_day_2024.csv`
-   - `alex_steps_per_day_2024.csv`
-5. Removed incomplete or invalid rows and standardized column names
+## Interpretation
+Alex consistently walked more than Lindsay, with a small-to-moderate effect size.  
+Neither participant showed significant weekday-weekend or monthly differences, suggesting **stable daily routines**.
 
 ---
 
-## Statistical Analysis
-Performed using `analysis.py`.
+## Limitations
+Observational data only; device differences and contextual factors (weather, travel, etc.) were not controlled.
 
-- **Descriptive Stats:** Mean, median, standard deviation, min, max  
-- **Inferential Tests:**  
-  - Welch’s t-test (Lindsay vs. Alex)  
-  - Welch’s t-tests for weekday vs. weekend per person  
-- **Power Analysis:** Estimated required sample size (α=0.05, power=0.80)
+---
 
-**Results Summary:**
-| Test | Comparison | Mean₁ | Mean₂ | p-value | Significant? |
-|------|-------------|-------|-------|----------|---------------|
-| H1 | Lindsay vs Alex | 64
+## Future Work
+Add contextual data (e.g., weather or events) and explore long-term or clustered activity patterns.
+
+---
+
+**References:**  
+Schäfer & Schwarz (2019). *The Meaningfulness of Effect Sizes in Psychological Research.* *Frontiers in Psychology*, 10. [https://doi.org/10.3389/fpsyg.2019.00813](https://doi.org/10.3389/fpsyg.2019.00813)
